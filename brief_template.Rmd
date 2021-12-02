@@ -1,0 +1,179 @@
+---
+title: "Briefing DV capstone"
+author: "Arsyad Ali Mahardika"
+date: "`r Sys.Date()`"
+output: 
+ html_document:
+   toc: true
+   toc_float: true
+   highlight: zenburn
+   df_print: paged
+   theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+File ini berisi template untuk mejawab pertanyaan 5W+1H saat briefing Capstone Data Visualization sebagai langkah awal sebelum membuat Dashboard. Silakan Bapak/Ibu mengisi jawaban di bawah. 
+
+File ini tidak akan dinilai namun Bapak/Ibu **WAJIB** disubmit ke dalam classroom pada hari H briefing Capstone Data Visualization.
+
+# What
+
+Tentukan tujuan atau informasi yang ingin ditampilkan dalam dashboard
+
+**Jawab** 
+
+Tujuan yang ingin dicapai atau informasi yang ingin disampaikan:
+
+- category yang paling sering dimainkan
+- menampilkan jumlah pemain games
+- mengambil data bergantung pada ratings
+- mengambil game yang paling baru
+
+# Who
+
+Untuk siapa dashboard ini dibuat? Siapa target pembaca dari dashboard ini?
+
+**Jawab**
+
+untuk pemain games
+
+# Why
+
+Apakah data yang dibuat relevan atau sesuai dengan tujuan? Mengapa?
+
+**Jawab**
+
+sesuai karna data yang di ambil sudah dari beberapa tahun yang lalu
+
+# When
+
+Apakah data yang digunakan masih *up to date* atau masih relevan dengan kondisi sekarang? Apakah ada informasi tentang tanggal update terakhir dari data tersebut?
+
+**Jawab**
+
+mungkin karna data di update perbulan, ada
+
+
+# How
+
+Bagaimana Bapak/Ibu menggunakan visualisasi untuk menjawab tujuan yang telah disebutkan? 
+
+Buat plot yang akan dimasukkan ke dalam dashboard. Boleh dalam bentuk `ggplot` maupun `plotly`.
+
+**Jawab**
+
+Plot untuk menjawab tujuan pertama
+```{r}
+# your code here
+options(scipen = 123)
+library(shiny)
+library(shinydashboard)
+library(dplyr)
+library(glue)
+library(ggplot2)
+library(tidyr)
+library(plotly)
+library(lubridate)
+
+steam_games <- read.csv("data_set/ratings_games.csv")
+
+steam <- 
+  steam_games %>% 
+  select(Game, Review.summary, Current.players, Peak.players.today, Release.date, Total.reviews) %>% 
+  mutate(Game=as.factor(Game),
+         Review.summary=as.factor(Review.summary),
+         Release.date=dmy(Release.date) )%>% 
+  drop_na(Release.date) 
+steam
+# ini cara biar tidak muncul warning gimana ya?
+```
+
+
+Plot kedua
+1. mengurtkan game yang paling sering dimainkan(bar plot,range input)
+```{r}
+# your code here
+wrPlot1 <- 
+  steam %>% 
+  head(10) 
+# head(2)
+  
+
+plot1 <- 
+  wrPlot1 %>% 
+  ggplot(aes(x = Peak.players.today, y = reorder(Game,Peak.players.today), 
+           text = glue("{Game}
+                        Peak Player Today: {scales::comma(Peak.players.today, 1)}
+                        Current Players: {scales::comma(Current.players, 1)}"))) + 
+  geom_col(mapping=aes(fill=Current.players)) +
+  scale_x_continuous(labels = scales::comma) +
+      labs(title = , 
+           x = "Peak Player Today", 
+           y = NULL, 
+           fill = "Current Players") 
+  
+ggplotly(plot1, tooltip="text")
+
+```
+
+Plot ketiga
+2. plot total reviewsd an di tooltip diberi Review summary(Lollipop, select Review summary)(,select input)
+```{r}
+# your code here
+wrPlot2 <- 
+  steam %>% 
+  select(Game, Total.reviews, Review.summary) %>% 
+  filter(Review.summary=="Very Positive") %>% 
+  # tail(5) 
+head(5)
+  
+
+plot2 <- 
+  wrPlot2 %>% 
+  ggplot(aes(x = Total.reviews, y = reorder(Game,Total.reviews), 
+             text = glue("{Game}
+                          Total Review: {scales::comma(Total.reviews, 1)}
+                          Response : {Review.summary} "))) +
+  geom_point(size = 3, colour = "black") + 
+  geom_segment(aes(x=Total.reviews, xend=Total.reviews, y=0, yend=reorder(Game,Total.reviews)))+
+  scale_x_continuous(labels = scales::comma) +
+    labs(title =, 
+         x = "Total Review", 
+         y = NULL, 
+         fill = NULL) 
+
+
+  
+  
+ggplotly(plot2, tooltip="text")
+```
+
+Buat chunk baru apabila ada lebih dari 3 plot.
+
+# Where
+
+Bagaimana desain layout atau tata letak dashboard yang akan dibuat?
+
+**Jawab**
+
+Contoh penulisan layout. 
+
+Tab atau halaman pertama
+## lokasi plot
+- menampilkan jumlah pemain games
+- mengurtkan game yang sering dimainkan(bar plot)
+- mengambil data bergantung pada ratings bedasarkan nama game(Lollipop,select input)
+- mengambil game yang paling baru rilis
+
+Tab atau halaman kedua
+
+- data mentah(data table)
+
+Tab atau halaman ketiga
+
+- tentang dashboard ini
+- sosmed
+- source data
